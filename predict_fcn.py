@@ -1,13 +1,9 @@
 import numpy as np
 from skimage.io import imshow, imread, imsave
 import keras.models
+import argparse
 
 from common import bound_gpu_usage, get_cropped_image
-
-
-NAME = '21_detect'
-PATH = 'regions/binary/g01_g.tif'
-OUTPUT = 'p20_02_gg.png'
 
 
 def predict_with_model(model, image):
@@ -17,12 +13,12 @@ def predict_with_model(model, image):
             image.shape[0], image.shape[1], -1)
 
 
-def main():
-    image = get_cropped_image(PATH)
+def main(model, in_filename, out_filename):
+    image = get_cropped_image(in_filename)
     bound_gpu_usage()
 
     result = predict_with_model(
-        keras.models.load_model('models/{}.h5'.format(NAME)),
+        keras.models.load_model('models/{}.h5'.format(model)),
         image
     )
     print('SHAPE:', result.shape)
@@ -37,7 +33,12 @@ def main():
         pic[:, :, 1] = result[:, :, 0] + result[:, :, 1]
         pic[:, :, 2] = result[:, :, 2]
 
-    imsave('results/{}'.format(OUTPUT), pic)
+    imsave(out_filename, pic)
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model', '-m', type=str, help='model name')
+    parser.add_argument('--input', '-i', type=str, help='path to input image')
+    parser.add_argument('--output', '-o', type=str, help='path to store result')
+    args = parser.parse_args()
+    main(args.model, args.input, args.output)
